@@ -19,6 +19,8 @@ dependencies {
     // tests
     testCompile group: 'io.vertx', name: 'vertx-core', version: '3.0.0-SNAPSHOT', classifier: 'tests'
     testCompile 'junit:junit:4.12'
+	
+	testRuntime 'com.github.jknack:handlebars:2.1.0'
 }
 
 task wrapper(type: Wrapper) {

@@ -1,5 +1,6 @@
 import groovy.json.JsonBuilder
 import controllers.TestStaticController
+import io.vertx.groovy.ext.apex.templ.HandlebarsTemplateEngine
 
 router {
     route "/handlers", {
@@ -12,9 +13,24 @@ router {
             context.response().end(new JsonBuilder([result:"POST"]).toString())
         }
     }
-    route "/static", {
+    route "/staticClosure", {
         GET TestStaticController.testClosure
     }
+	staticHandler "/assets/*"
+	staticHandler "/instrumented-assets/*", { 
+		 GET { context ->
+			 context.request().headers().add("X-Custom-Header", "instrumented")
+		 }
+	}
+	templateHandler "/dynamic/*", HandlebarsTemplateEngine.create()
+	subRouter "/sub", {
+		staticHandler "/assets/*", "webroot/subDirectory"
+		route "/firstSubRoute", {
+			GET { context ->
+				context.response().end("firstSubRoute")
+			}
+		}
+	}
 }
 
 // vs

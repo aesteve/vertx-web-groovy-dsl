@@ -18,7 +18,7 @@ public class SimpleDSLTest extends TestBase {
 
     @Before
     public void createServer() {
-        Router router = RouterBuilder.buildRouter(vertx, new File("testscripts/routes.groovy"))
+        Router router = RouterBuilder.buildRouter(vertx, new File("src/test/resources/routes.groovy"))
         HttpServer server = vertx.createHttpServer()
         server.requestHandler(router.&accept)
         server.listen(PORT)
@@ -59,7 +59,7 @@ public class SimpleDSLTest extends TestBase {
     @Test
     public void testGetStatic(){
         CountDownLatch latch = new CountDownLatch(1)
-        client().get("/static", { HttpClientResponse response ->
+        client().get("/staticClosure", { HttpClientResponse response ->
             assertEquals(200, response.statusCode())
             response.bodyHandler { Buffer buffer ->
                 assertEquals(new JsonBuilder([result:"closure"]).toString(), buffer.toString("UTF-8"))
