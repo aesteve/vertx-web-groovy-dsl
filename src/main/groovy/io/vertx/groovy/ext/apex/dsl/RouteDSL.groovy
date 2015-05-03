@@ -4,29 +4,26 @@ import io.vertx.core.http.HttpMethod
 import io.vertx.groovy.ext.apex.Route
 import io.vertx.groovy.ext.apex.Router
 import io.vertx.groovy.ext.apex.handler.BodyHandler
+import io.vertx.groovy.ext.apex.handler.SessionHandler
+import io.vertx.groovy.ext.apex.sstore.ClusteredSessionStore
+import io.vertx.groovy.ext.apex.sstore.LocalSessionStore
+import io.vertx.groovy.ext.apex.sstore.SessionStore
 
 import groovy.transform.TypeChecked
 
 class RouteDSL {
 
-    Router router
+	RouterDSL parent
     String path
 	BodyHandler bodyHandler
 	boolean cookies
+	SessionStore sessionStore
 
-	def static make(Router router, String path, Closure closure, boolean cookies) {
-		RouteDSL routeDSL = new RouteDSL(path:path, router:router, cookies:cookies)
+	def static make(RouterDSL parent, String path, Closure closure, boolean cookies) {
+		RouteDSL routeDSL = new RouteDSL(path:path, parent:parent, cookies:cookies)
 		closure.resolveStrategy = Closure.DELEGATE_FIRST
 		closure.delegate = routeDSL
 		closure.call()
-	}
-	
-	def static make(Router router, String path, HttpMethod method, Closure closure, boolean cookies) {
-		Route route = router.route(method, path)
-		if (cookies) {
-			route.handler(io.vertx.groovy.ext.apex.handler.CookieHandler.create())
-		}
-		route.handler(closure)
 	}
 	
     def get(Closure handler) {
@@ -65,28 +62,37 @@ class RouteDSL {
 		createRoute(HttpMethod.PATCH, handler)
 	}
 
+	def session(Map options) {
+		if (options.store) {
+			sessionStore = options.store
+		} else if (options.clustered) {
+			sessionStore = LocalSessionStore.create(parent.vertx)
+		} else {
+			sessionStore = ClusteredSessionStore.create(parent.vertx)
+		}
+	}
+	
 	private void createRoute(HttpMethod method, Closure handler, boolean useBodyHandler = false) {
 		if (useBodyHandler) {
 			if (!bodyHandler) {
 				bodyHandler = BodyHandler.create()
 			}
-			router.route(method, path).handler(bodyHandler);
+			parent.router.route(method, path).handler(bodyHandler);
 		}
-		if (cookies) {
-			router.route(method, path).handler(io.vertx.groovy.ext.apex.handler.CookieHandler.create())
+		if (cookies || sessionStore) {
+			parent.router.route(method, path).handler()
 		}
-		router.route(method, path).handler(handler)
+		if (sessionStore) {
+			parent.router.route(path).handler(SessionHandler.create(sessionStore))
+		}
+		parent.router.route(method, path).handler(handler)
 	}
 	
 	def methodMissing(String name, args) {
-		try {
-			if (args && args.size() == 1) {
-				router.route(path)."$name"(args[0])
-			} else {
-				router.route(path)."$name"(args)
-			}
-		} catch (MissingMethodException mme) {
-			throw new IllegalArgumentException("Method : $name doesn't exist on ${Route.class.toString()}")
-		}  
+		if (args && args.size() == 1) {
+			parent.router.route(path)."$name"(args[0])
+		} else {
+			parent.router.route(path)."$name"(args)
+		}
 	}
 }

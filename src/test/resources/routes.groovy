@@ -3,7 +3,7 @@ import controllers.TestController
 import controllers.TestStaticController
 import io.vertx.groovy.ext.apex.templ.HandlebarsTemplateEngine
 
-TestController ctrlInstance = new TestController()
+TestController ctrlerInstance = new TestController()
 
 router {
 	get "/simpleGet", { context ->
@@ -20,7 +20,7 @@ router {
         }
     }
     get "/staticClosure", TestStaticController.testClosure
-	get "/controllerInstance", ctrlInstance.&someMethod
+	get "/controllerInstance", ctrlerInstance.&someMethod
 	staticHandler "/assets/*"
 	staticHandler "/instrumented-assets/*", { 
 		 get { context ->
@@ -35,15 +35,14 @@ router {
 			context.response().end("firstSubRoute")
 		}
 	}
+	sockJS "/sockjs/*", { socket ->
+		socket.handler(socket.&write)
+	}
+	favicon "my_favicon.ico"
+	route "/login/*", {
+		session([clustered:true])
+		get { context ->
+			context.response().end(context.session().get("test"))
+		}
+	}
 }
-
-// vs
-/*
- Router.router(vertx)
- router.route "/api/1/groovy"
- .consumes "application/json"
- .produces "application/json"
- .handler { context -> 
- context.response().end("Example")
- }
- */
