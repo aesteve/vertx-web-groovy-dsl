@@ -6,9 +6,9 @@ import io.vertx.groovy.ext.apex.templ.HandlebarsTemplateEngine
 TestController ctrlerInstance = new TestController()
 
 router {
-	get "/simpleGet", { context ->
-		context.response().end("Simple GET")
-	}
+    get "/simpleGet", { context ->
+        context.response().end("Simple GET")
+    }
     route "/handlers", {
         produces "application/json"
         consumes "application/json"
@@ -20,29 +20,29 @@ router {
         }
     }
     get "/staticClosure", TestStaticController.testClosure
-	get "/controllerInstance", ctrlerInstance.&someMethod
-	staticHandler "/assets/*"
-	staticHandler "/instrumented-assets/*", { 
-		 get { context ->
-			 context.request().headers().add("X-Custom-Header", "instrumented")
-		 }
-	}
-	templateHandler "/dynamic/*", HandlebarsTemplateEngine.create()
-	subRouter "/sub", {
-		cookies : true
-		staticHandler "/assets/*", "webroot/subDirectory"
-		get "/firstSubRoute", { context ->
-			context.response().end("firstSubRoute")
-		}
-	}
-	sockJS "/sockjs/*", { socket ->
-		socket.handler(socket.&write)
-	}
-	favicon "my_favicon.ico"
-	route "/login/*", {
-		session([clustered:true])
-		get { context ->
-			context.response().end(context.session().get("test"))
-		}
-	}
+    get "/controllerInstance", ctrlerInstance.&someMethod
+    staticHandler "/assets/*"
+    staticHandler "/instrumented-assets/*", {
+        get { context ->
+            context.request().headers().add("X-Custom-Header", "instrumented")
+        }
+    }
+    templateHandler "/dynamic/*", HandlebarsTemplateEngine.create()
+    subRouter "/sub", {
+        cookies : true
+        staticHandler "/assets/*", "webroot/subDirectory"
+        get "/firstSubRoute", { context ->
+            context.response().end("firstSubRoute")
+        }
+    }
+    sockJS "/sockjs/*", { socket ->
+        socket.handler(socket.&write)
+    }
+    favicon "my_favicon.ico"
+    route "/login/*", {
+        session([clustered:true])
+        get { context ->
+            context.response().end(context.session().get("test"))
+        }
+    }
 }
