@@ -21,6 +21,7 @@ public class RouterDSL {
 	
 	def make(Closure closure) {
 		router = Router.router(vertx)
+		closure.resolveStrategy = Closure.DELEGATE_FIRST
 		closure.delegate = this
 		closure()
 	}

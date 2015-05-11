@@ -8,6 +8,8 @@ import io.vertx.groovy.ext.apex.handler.SessionHandler
 import io.vertx.groovy.ext.apex.sstore.ClusteredSessionStore
 import io.vertx.groovy.ext.apex.sstore.LocalSessionStore
 import io.vertx.groovy.ext.apex.sstore.SessionStore
+import io.vertx.groovy.ext.apex.handler.CorsHandler
+
 
 import groovy.transform.TypeChecked
 
@@ -18,6 +20,8 @@ class RouteDSL {
 	BodyHandler bodyHandler
 	boolean cookies
 	SessionStore sessionStore
+	private List<Route> routes = []
+	private List<List<Object>> missingMethods = []
 
 	def static make(RouterDSL parent, String path, Closure closure, boolean cookies) {
 		RouteDSL routeDSL = new RouteDSL(path:path, parent:parent, cookies:cookies)
@@ -61,6 +65,10 @@ class RouteDSL {
 	def patch(Closure handler) {
 		createRoute(HttpMethod.PATCH, handler)
 	}
+	
+	def cors(String origin) {
+		parent.router.route(path).handler(CorsHandler.create(origin));
+	}
 
 	def session(Map options) {
 		if (options.store) {
@@ -85,14 +93,29 @@ class RouteDSL {
 		if (sessionStore) {
 			parent.router.route(path).handler(SessionHandler.create(sessionStore))
 		}
-		parent.router.route(method, path).handler(handler)
+		Route route = parent.router.route(method, path)
+		missingMethods.each { methodMissing -> 
+			callMethodOnRoute(route, methodMissing[0], methodMissing[1])
+		}
+		route.handler(handler)
+		routes << route
 	}
 	
 	def methodMissing(String name, args) {
+		if (routes.empty) {
+			// delay
+			missingMethods << [name,args]
+		}
+		routes.each { Route route ->
+			callMethodOnRoute(route, name, args)
+		}
+	}
+	
+	def callMethodOnRoute(route, name, args) {
 		if (args && args.size() == 1) {
-			parent.router.route(path)."$name"(args[0])
+			route."$name"(args[0])
 		} else {
-			parent.router.route(path)."$name"(args)
+			route."$name"(args)
 		}
 	}
 }

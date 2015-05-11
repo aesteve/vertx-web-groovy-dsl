@@ -30,6 +30,12 @@ router {
 	templateHandler "/dynamic/*", HandlebarsTemplateEngine.create()
 	subRouter "/sub", {
 		cookies : true
+		/*
+		auth {
+			basic : true
+			provider :  
+		}
+		*/
 		staticHandler "/assets/*", "webroot/subDirectory"
 		get "/firstSubRoute", { context ->
 			context.response().end("firstSubRoute")
@@ -38,11 +44,17 @@ router {
 	sockJS "/sockjs/*", { socket ->
 		socket.handler(socket.&write)
 	}
-	favicon "my_favicon.ico"
-	route "/login/*", {
+	//favicon "my_favicon.ico"
+	route "/login", {
 		session([clustered:true])
 		get { context ->
 			context.response().end(context.session().get("test"))
+		}
+	}
+	route "/cors/test", {
+		cors "*"
+		get { context ->
+			context.response().end("CORS")
 		}
 	}
 }

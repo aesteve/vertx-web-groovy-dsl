@@ -14,7 +14,7 @@ import org.junit.Test
 import org.junit.Before
 import static org.junit.Assert.*
 
-public class SimpleDSLTest extends TestBase {
+public class RoutingTest extends TestBase {
 
     @Before
     public void createServer() {
@@ -39,6 +39,19 @@ public class SimpleDSLTest extends TestBase {
         .end()
         latch.await()
     }
+	
+	@Test
+	public void testWrongContentType() {
+		CountDownLatch latch = new CountDownLatch(1)
+		client().get("/handlers", { HttpClientResponse response ->
+			assertEquals(404, response.statusCode())
+			latch.countDown()
+		})
+		.putHeader("Accept", "application/xml")
+		.putHeader("Content-Type", "application/xml")
+		.end()
+		latch.await()
+	}
 
     @Test
     public void testPostHandler(){
