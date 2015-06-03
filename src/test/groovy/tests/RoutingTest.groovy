@@ -5,9 +5,9 @@ import io.vertx.groovy.core.Vertx
 import io.vertx.groovy.core.buffer.Buffer
 import io.vertx.groovy.core.http.HttpClientResponse
 import io.vertx.groovy.core.http.HttpServer
-import io.vertx.groovy.ext.apex.Router
-import io.vertx.groovy.ext.apex.dsl.RouterBuilder
-import io.vertx.groovy.ext.apex.dsl.RouterDSL
+import io.vertx.groovy.ext.web.Router
+import io.vertx.groovy.ext.web.dsl.RouterBuilder
+import io.vertx.groovy.ext.web.dsl.RouterDSL
 import java.util.concurrent.CountDownLatch
 
 import org.junit.Test
@@ -39,19 +39,19 @@ public class RoutingTest extends TestBase {
         .end()
         latch.await()
     }
-	
-	@Test
-	public void testWrongContentType() {
-		CountDownLatch latch = new CountDownLatch(1)
-		client().get("/handlers", { HttpClientResponse response ->
-			assertEquals(404, response.statusCode())
-			latch.countDown()
-		})
-		.putHeader("Accept", "application/xml")
-		.putHeader("Content-Type", "application/xml")
-		.end()
-		latch.await()
-	}
+
+    @Test
+    public void testWrongContentType() {
+        CountDownLatch latch = new CountDownLatch(1)
+        client().get("/handlers", { HttpClientResponse response ->
+            assertEquals(404, response.statusCode())
+            latch.countDown()
+        })
+        .putHeader("Accept", "application/xml")
+        .putHeader("Content-Type", "application/xml")
+        .end()
+        latch.await()
+    }
 
     @Test
     public void testPostHandler(){

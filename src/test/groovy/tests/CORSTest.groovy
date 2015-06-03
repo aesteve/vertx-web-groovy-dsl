@@ -5,9 +5,9 @@ import io.vertx.groovy.core.Vertx
 import io.vertx.groovy.core.buffer.Buffer
 import io.vertx.groovy.core.http.HttpClientResponse
 import io.vertx.groovy.core.http.HttpServer
-import io.vertx.groovy.ext.apex.Router
-import io.vertx.groovy.ext.apex.dsl.RouterBuilder
-import io.vertx.groovy.ext.apex.dsl.RouterDSL
+import io.vertx.groovy.ext.web.Router
+import io.vertx.groovy.ext.web.dsl.RouterBuilder
+import io.vertx.groovy.ext.web.dsl.RouterDSL
 import java.util.concurrent.CountDownLatch
 
 import org.junit.Test
@@ -27,14 +27,15 @@ public class CORSTest extends TestBase {
     @Test
     public void testAllowOrigin(){
         CountDownLatch latch = new CountDownLatch(1)
-        client().getNow("/cors/test", { HttpClientResponse response ->
+        client().get("/cors/test", { HttpClientResponse response ->
             assertEquals(200, response.statusCode())
-			assertEquals("*", response.headers().get("Access-Control-Allow-Origin"))
+            response.headers().each { println it }
+            assertEquals("*", response.headers().get("Access-Control-Allow-Origin"))
             response.bodyHandler { Buffer buffer ->
                 assertEquals("CORS", buffer.toString("UTF-8"))
                 latch.countDown()
             }
-        })
+        }).putHeader("origin", "vertx.io").end()
         latch.await()
     }
 }
