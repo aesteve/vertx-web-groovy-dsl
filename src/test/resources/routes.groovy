@@ -25,6 +25,7 @@ router {
     staticHandler "/instrumented-assets/*", {
         get { context ->
             context.request().headers().add("X-Custom-Header", "instrumented")
+            context.next()
         }
     }
     templateHandler "/dynamic/*", HandlebarsTemplateEngine.create()
