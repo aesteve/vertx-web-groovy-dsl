@@ -1,85 +1,78 @@
 package tests
 
+import static org.junit.Assert.*
 import groovy.json.JsonBuilder
+import groovy.transform.TypeChecked
+import io.vertx.core.http.HttpHeaders
 import io.vertx.groovy.core.Vertx
 import io.vertx.groovy.core.buffer.Buffer
 import io.vertx.groovy.core.http.HttpClientResponse
 import io.vertx.groovy.core.http.HttpServer
+import io.vertx.groovy.ext.unit.Async
+import io.vertx.groovy.ext.unit.TestContext
 import io.vertx.groovy.ext.web.Router
 import io.vertx.groovy.ext.web.dsl.RouterBuilder
-import io.vertx.groovy.ext.web.dsl.RouterDSL
+import static io.vertx.core.http.HttpHeaders.*
 import java.util.concurrent.CountDownLatch
 
-import org.junit.Test
 import org.junit.Before
-import static org.junit.Assert.*
+import org.junit.Test
 
+@TypeChecked
 public class RoutingTest extends TestBase {
 
-    @Before
-    public void createServer() {
-        Router router = RouterBuilder.buildRouter(vertx, new File("src/test/resources/routes.groovy"))
-        HttpServer server = vertx.createHttpServer()
-        server.requestHandler(router.&accept)
-        server.listen(PORT)
-    }
+	@Test
+	public void testGetHandler(TestContext context) {
+		Async async = context.async()
+		client().get("/handlers", { HttpClientResponse response ->
+			assertEquals(200, response.statusCode())
+			response.bodyHandler { Buffer buffer ->
+				context.assertEquals(buffer.toString("UTF-8"), new JsonBuilder([result:"GET"]).toString())
+				async.complete()
+			}
+		})
+		.putHeader(ACCEPT.toString(), "application/json")
+		.putHeader(CONTENT_TYPE.toString(), "application/json")
+		.end()
+	}
 
-    @Test
-    public void testGetHandler(){
-        CountDownLatch latch = new CountDownLatch(1)
-        client().get("/handlers", { HttpClientResponse response ->
-            assertEquals(200, response.statusCode())
-            response.bodyHandler { Buffer buffer ->
-                assertEquals(new JsonBuilder([result:"GET"]).toString(), buffer.toString("UTF-8"))
-                latch.countDown()
-            }
-        })
-        .putHeader("Accept", "application/json")
-        .putHeader("Content-Type", "application/json")
-        .end()
-        latch.await()
-    }
+	@Test
+	public void testWrongContentType(TestContext context) {
+		Async async = context.async()
+		client().get("/handlers", { HttpClientResponse response ->
+			context.assertEquals(response.statusCode(), 404)
+			async.complete()
+		})
+		.putHeader(ACCEPT.toString(), "application/xml")
+		.putHeader(CONTENT_TYPE.toString(), "application/xml")
+		.end()
+	}
 
-    @Test
-    public void testWrongContentType() {
-        CountDownLatch latch = new CountDownLatch(1)
-        client().get("/handlers", { HttpClientResponse response ->
-            assertEquals(404, response.statusCode())
-            latch.countDown()
-        })
-        .putHeader("Accept", "application/xml")
-        .putHeader("Content-Type", "application/xml")
-        .end()
-        latch.await()
-    }
+	@Test
+	public void testPostHandler(TestContext context) {
+		Async async = context.async()
+		client().post("/handlers", { HttpClientResponse response ->
+			context.assertEquals(response.statusCode(), 200)
+			response.bodyHandler { Buffer buffer ->
+				context.assertEquals(buffer.toString("UTF-8"), new JsonBuilder([result:"POST"]).toString())
+				async.complete()
+			}
+		})
+		.putHeader(ACCEPT.toString(), "application/json")
+		.putHeader(CONTENT_TYPE.toString(), "application/json")
+		.end()
+	}
 
-    @Test
-    public void testPostHandler(){
-        CountDownLatch latch = new CountDownLatch(1)
-        client().post("/handlers", { HttpClientResponse response ->
-            assertEquals(200, response.statusCode())
-            response.bodyHandler { Buffer buffer ->
-                assertEquals(new JsonBuilder([result:"POST"]).toString(), buffer.toString("UTF-8"))
-                latch.countDown()
-            }
-        })
-        .putHeader("Accept", "application/json")
-        .putHeader("Content-Type", "application/json")
-        .end()
-        latch.await()
-    }
-
-    @Test
-    public void testGetStatic(){
-        CountDownLatch latch = new CountDownLatch(1)
-        client().get("/staticClosure", { HttpClientResponse response ->
-            assertEquals(200, response.statusCode())
-            response.bodyHandler { Buffer buffer ->
-                assertEquals(new JsonBuilder([result:"closure"]).toString(), buffer.toString("UTF-8"))
-                latch.countDown()
-            }
-        })
-        .end()
-        latch.await()
-    }
+	@Test
+	public void testGetStatic(TestContext context) {
+		Async async = context.async()
+		client().get("/staticClosure", { HttpClientResponse response ->
+			assertEquals(200, response.statusCode())
+			response.bodyHandler { Buffer buffer ->
+				context.assertEquals(buffer.toString("UTF-8"), new JsonBuilder([result:"closure"]).toString())
+				async.complete()
+			}
+		})
+		.end()
+	}
 }

@@ -1,41 +1,34 @@
 package tests
 
-import groovy.json.JsonBuilder
-import io.vertx.groovy.core.Vertx
+import static org.junit.Assert.*
+import groovy.transform.TypeChecked
 import io.vertx.groovy.core.buffer.Buffer
 import io.vertx.groovy.core.http.HttpClientResponse
-import io.vertx.groovy.core.http.HttpServer
-import io.vertx.groovy.ext.web.Router
-import io.vertx.groovy.ext.web.dsl.RouterBuilder
-import io.vertx.groovy.ext.web.dsl.RouterDSL
+import io.vertx.groovy.ext.unit.Async
+import io.vertx.groovy.ext.unit.TestContext
+
+import static io.vertx.core.http.HttpHeaders.*
+
 import java.util.concurrent.CountDownLatch
 
 import org.junit.Test
-import org.junit.Before
-import static org.junit.Assert.*
 
+@TypeChecked
 public class CORSTest extends TestBase {
 
-    @Before
-    public void createServer() {
-        Router router = RouterBuilder.buildRouter(vertx, new File("src/test/resources/routes.groovy"))
-        HttpServer server = vertx.createHttpServer()
-        server.requestHandler(router.&accept)
-        server.listen(PORT)
-    }
-
-    @Test
-    public void testAllowOrigin(){
-        CountDownLatch latch = new CountDownLatch(1)
-        client().get("/cors/test", { HttpClientResponse response ->
-            assertEquals(200, response.statusCode())
-            response.headers().each { println it }
-            assertEquals("*", response.headers().get("Access-Control-Allow-Origin"))
-            response.bodyHandler { Buffer buffer ->
-                assertEquals("CORS", buffer.toString("UTF-8"))
-                latch.countDown()
-            }
-        }).putHeader("origin", "vertx.io").end()
-        latch.await()
-    }
+	@Test
+	public void testAllowOrigin(TestContext context) {
+		Async async = context.async()
+		client().get("/cors/test", { HttpClientResponse response ->
+			assertEquals(200, response.statusCode())
+			response.headers().each { println it }
+			assertEquals("*", response.headers().get(ACCESS_CONTROL_ALLOW_ORIGIN.toString()))
+			response.bodyHandler { Buffer buffer ->
+				context.assertEquals(buffer.toString("UTF-8"), "CORS")
+				async.complete()
+			}
+		})
+		.putHeader("origin", "vertx.io")
+		.end()
+	}
 }

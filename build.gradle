@@ -16,7 +16,7 @@ dependencies {
     compile 'io.vertx:vertx-lang-groovy:3.0.0'
     
     // tests
-    testCompile group: 'io.vertx', name: 'vertx-core', version: '3.0.0', classifier: 'tests'
+    testCompile 'io.vertx:vertx-unit:3.0.0'
     testCompile 'junit:junit:4.12'
 	
 	testRuntime 'com.github.jknack:handlebars:2.1.0'

@@ -11,130 +11,131 @@ import io.vertx.groovy.ext.web.handler.TemplateHandler
 import io.vertx.groovy.ext.web.handler.sockjs.SockJSHandler
 
 public class RouterDSL {
-    Vertx vertx
-    Router router
-    boolean cookies
-    private StaticHandler staticHandler
-    private CookieHandler cookieHandler
 
-    def make(Closure closure) {
-        router = Router.router(vertx)
-        closure.resolveStrategy = Closure.DELEGATE_FIRST
-        closure.delegate = this
-        closure()
-    }
+	Vertx vertx
+	Router router
+	boolean cookies
+	private StaticHandler staticHandler
+	private CookieHandler cookieHandler
 
-    def subRouter(String path, Closure closure) {
-        RouterDSL dsl = new RouterDSL(vertx:vertx)
-        dsl.make(closure)
-        router.mountSubRouter(path, dsl.router)
-    }
+	def make(Closure closure) {
+		router = Router.router(vertx)
+		closure.resolveStrategy = Closure.DELEGATE_FIRST
+		closure.delegate = this
+		closure()
+	}
 
-    def staticHandler(String path, Closure closure = null) {
-        if (!staticHandler) {
-            staticHandler = StaticHandler.create()
-        }
-        if (closure) {
-            RouteDSL.make(this, path, closure, cookies)
-        }
-        router.route(path).handler(staticHandler)
-    }
+	def subRouter(String path, Closure closure) {
+		RouterDSL dsl = new RouterDSL(vertx:vertx)
+		dsl.make(closure)
+		router.mountSubRouter(path, dsl.router)
+	}
 
-    def staticHandler(String path, String webroot, Closure closure = null) {
-        if (closure) {
-            RouteDSL.make(this, path, closure, cookies)
-        }
-        router.route(path).handler(StaticHandler.create(webroot))
-    }
+	def staticHandler(String path, Closure closure = null) {
+		if (!staticHandler) {
+			staticHandler = StaticHandler.create()
+		}
+		if (closure) {
+			RouteDSL.make(this, path, closure, cookies)
+		}
+		router.route(path).handler(staticHandler)
+	}
 
-    def templateHandler(String path, def engine, Closure closure = null) {
-        TemplateHandler tplHandler = TemplateHandler.create(engine)
-        if (closure) {
-            RouteDSL.make(this, path, closure, cookies)
-        }
-        router.route(path).handler(tplHandler)
-    }
+	def staticHandler(String path, String webroot, Closure closure = null) {
+		if (closure) {
+			RouteDSL.make(this, path, closure, cookies)
+		}
+		router.route(path).handler(StaticHandler.create(webroot))
+	}
 
-    def sockJS(String path, Map options = [:], Closure closure) {
-        SockJSHandler sockJS = SockJSHandler.create(vertx, options)
-        sockJS.socketHandler(closure)
-        router.route(path).handler(sockJS)
-    }
+	def templateHandler(String path, def engine, Closure closure = null) {
+		TemplateHandler tplHandler = TemplateHandler.create(engine)
+		if (closure) {
+			RouteDSL.make(this, path, closure, cookies)
+		}
+		router.route(path).handler(tplHandler)
+	}
 
-    def favicon(String iconPath = null, Long maxAgeSeconds = null) {
-        FaviconHandler favHandler
-        if (iconPath) {
-            if (maxAgeSeconds && maxAgeSeconds > 0) {
-                favHandler = FaviconHandler.create(iconPath, maxAgeSeconds)
-            } else {
-                favHandler = FaviconHandler.create(iconPath)
-            }
-        } else {
-            if (maxAgeSeconds && maxAgeSeconds > 0) {
-                favHandler = FaviconHandler.create(maxAgeSeconds)
-            } else {
-                favHandler = FaviconHandler.create()
-            }
-        }
-        router.route().handler(favHandler)
-        router.route().handler { RoutingContext context ->
-            context.response().end()
-        }
-    }
+	def sockJS(String path, Map options = [:], Closure closure) {
+		SockJSHandler sockJS = SockJSHandler.create(vertx, options)
+		sockJS.socketHandler(closure)
+		router.route(path).handler(sockJS)
+	}
 
-    def route(String path, Closure closure) {
-        RouteDSL.make(this, path, closure, cookies)
-    }
+	def favicon(String iconPath = null, Long maxAgeSeconds = null) {
+		FaviconHandler favHandler
+		if (iconPath) {
+			if (maxAgeSeconds && maxAgeSeconds > 0) {
+				favHandler = FaviconHandler.create(iconPath, maxAgeSeconds)
+			} else {
+				favHandler = FaviconHandler.create(iconPath)
+			}
+		} else {
+			if (maxAgeSeconds && maxAgeSeconds > 0) {
+				favHandler = FaviconHandler.create(maxAgeSeconds)
+			} else {
+				favHandler = FaviconHandler.create()
+			}
+		}
+		router.route().handler(favHandler)
+		router.route().handler { RoutingContext context ->
+			context.response().end()
+		}
+	}
 
-    def get(String path, Closure closure) {
-        makeRoute(path, HttpMethod.GET, closure)
-    }
+	def route(String path, Closure closure) {
+		RouteDSL.make(this, path, closure, cookies)
+	}
 
-    def post(String path, Closure closure) {
-        makeRoute(path, HttpMethod.POST, closure)
-    }
+	def get(String path, Closure closure) {
+		makeRoute(path, HttpMethod.GET, closure)
+	}
 
-    def put(String path, Closure closure) {
-        makeRoute(path, HttpMethod.PUT, closure)
-    }
+	def post(String path, Closure closure) {
+		makeRoute(path, HttpMethod.POST, closure)
+	}
 
-    def delete(String path, Closure closure) {
-        makeRoute(path, HttpMethod.DELETE, closure)
-    }
+	def put(String path, Closure closure) {
+		makeRoute(path, HttpMethod.PUT, closure)
+	}
 
-    def options(String path, Closure closure) {
-        makeRoute(path, HttpMethod.OPTIONS, closure)
-    }
+	def delete(String path, Closure closure) {
+		makeRoute(path, HttpMethod.DELETE, closure)
+	}
 
-    def head(String path, Closure closure) {
-        makeRoute(path, HttpMethod.HEAD, closure)
-    }
+	def options(String path, Closure closure) {
+		makeRoute(path, HttpMethod.OPTIONS, closure)
+	}
 
-    def connect(String path, Closure closure) {
-        makeRoute(path, HttpMethod.CONNECT, closure)
-    }
+	def head(String path, Closure closure) {
+		makeRoute(path, HttpMethod.HEAD, closure)
+	}
 
-    def patch(String path, Closure closure) {
-        makeRoute(path, HttpMethod.PATCH, closure)
-    }
+	def connect(String path, Closure closure) {
+		makeRoute(path, HttpMethod.CONNECT, closure)
+	}
 
-    def trace(String path, Closure closure) {
-        makeRoute(path, HttpMethod.TRACE, closure)
-    }
+	def patch(String path, Closure closure) {
+		makeRoute(path, HttpMethod.PATCH, closure)
+	}
 
-    def makeRoute(String path, HttpMethod method, Closure closure) {
-        def route = router.route(method, path)
-        if (cookies) {
-            route.handler(CookieHandler.create())
-        }
-        route.handler(closure)
-    }
+	def trace(String path, Closure closure) {
+		makeRoute(path, HttpMethod.TRACE, closure)
+	}
 
-    def methodMissing(String name, args) {
-        if (args && args.size() == 1) {
-            router."$name"(args[0])
-        } else {
-            router."$name"(args)
-        }
-    }
+	def makeRoute(String path, HttpMethod method, Closure closure) {
+		def route = router.route(method, path)
+		if (cookies) {
+			route.handler(CookieHandler.create())
+		}
+		route.handler(closure)
+	}
+
+	def methodMissing(String name, args) {
+		if (args && args.size() == 1) {
+			router."$name"(args[0])
+		} else {
+			router."$name"(args)
+		}
+	}
 }
