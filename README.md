@@ -1,5 +1,5 @@
 # vertx-web-groovy-dsl
-A simple Groovy DSL to declare Vert.x Apex routes
+A Groovy DSL to declare Vert.x Web routes
 
 
 This projects aims at providing another way to define your web routes with vert-web if you're using Groovy, in a more Groovy-ish manner.
